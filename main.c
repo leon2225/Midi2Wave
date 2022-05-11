@@ -33,7 +33,7 @@
 #include    <stdio.h>
 #include    <stdlib.h>
 #include    <stdbool.h>
-#include "stdint.h"
+#include    "stdint.h"
 
 // .-. C H I P   S U P P O R T   L I B R A R Y -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
 #include    <csl.h>
@@ -43,7 +43,8 @@
 #include    <csl_i2c.h>
 
 // Own modules
-//#include "util.h"
+#include "util.h"
+
 
 // --- D E F I N I T I O N E N -------------------------------------------------
 /** Gr��e des/der Ringspeicher */
@@ -127,13 +128,14 @@ I2C_Setup cfg_I2C = {
 // --- G L O B A L E   V A R I A B L E N ---------------------------------------
 //extern void c_int00( void );
 //extern void VECSTART( void );
+extern unsigned short USBTest_Init();
 int volatile * const LEDs = (int *) 0x3F0000;
 
 /** Ringspeicher f�r die empfangenen Daten */
 volatile int cnt_input = 0;
 
 //https://www.daycounter.com/Calculators/Sine-Generator-Calculator.phtml
-  int sin_LT[SIZE_OF_BUFFER] = {
+ const int sin_LT[SIZE_OF_BUFFER] = {
                      32768 - 32768,     32969 - 32768,  33170 - 32768,  33371 - 32768,  33572 - 32768,  33774 - 32768,  33975 - 32768,  34176 - 32768,
                      34377 - 32768,     34578 - 32768,  34779 - 32768,  34980 - 32768,  35180 - 32768,  35381 - 32768,  35582 - 32768,  35782 - 32768,
                      35982 - 32768,     36183 - 32768,  36383 - 32768,  36583 - 32768,  36782 - 32768,  36982 - 32768,  37182 - 32768,  37381 - 32768,
@@ -401,11 +403,13 @@ int main( void )
 
     //IRQ_globalEnable();
     output = 0x7FFF;
+    USBTest_Init();
     //PLL_Init(48);
 
     /* Beginn der"Endlosschleife"                                            */
     while( 1 )
     {
+        /*
         if(ms == 2000)
         {
             PREG16(((TIMER_PrivateObj*)mhTimer0)->PrdAddr) = fToPRD(220.0 * (float)SIZE_OF_BUFFER);
@@ -418,7 +422,7 @@ int main( void )
         {
             PREG16(((TIMER_PrivateObj*)mhTimer0)->PrdAddr) = fToPRD(880.0 * (float)SIZE_OF_BUFFER);
             ms = 0;
-        }
+        }*/
 
         //PREG16(((TIMER_PrivateObj*)mhTimer0)->PrdAddr) += 1;
         //fn_delay(10);
@@ -581,7 +585,10 @@ uint16_t tToPRD(float t)
     return ticks / 16;
 }
 
-extern unsigned short USBTest_Init();
+void setTone(float tone)
+{
+    PREG16(((TIMER_PrivateObj*)mhTimer0)->PrdAddr) = fToPRD(tone * (float)SIZE_OF_BUFFER);
+}
 
 void wait( unsigned int cycles )
 {
