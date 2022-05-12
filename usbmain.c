@@ -125,7 +125,7 @@ int writeinprogress = 0;
 /*                                                                            */
 /******************************************************************************/
 extern void USB_ctl_handler();       // Control Endpoint Event handler
-extern void setTone(float tone);
+extern void setTone(uint32_t tone, uint16_t channelIndex);
 
 void USB_bulkOutEvHandler();         // Endpoint2 OUT event handler
                                      // Endpoint2 OUT data buffer handler
@@ -364,8 +364,11 @@ void USB_bulkOutDatHandler(USB_EpHandle hEpIn, USB_EpHandle hEpOut)
     if ( USB_isTransactionDone( hEpOut ) )
     {
         //puts("Received Data");
-        Uint32 in = ((Uint32)*(Endpt2Buff+2) << 16) | (*(Endpt2Buff+1));
-        setTone(in);
+        //Uint32 in = ((Uint32)*(Endpt2Buff+2) << 16) | (*(Endpt2Buff+1));
+        uint16_t tone0 = *(Endpt2Buff+1);
+        uint16_t tone1 = *(Endpt2Buff+2);
+        setTone(*(Endpt2Buff+2),0);
+        setTone(*(Endpt2Buff+1),1);
         /*char inArray[4];
         int i = 0;
         for(i = 0; i<4; i++)

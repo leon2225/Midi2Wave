@@ -285,7 +285,11 @@ Uint16 eventId1;
 uint16_t timPrecounter = 0;
 volatile uint32_t ms = 0;
 
-volatile Uint16 timer0_cnt = 0;
+#define CHANNELS 2
+volatile uint16_t subStepsPerTick[CHANNELS] = {0};
+volatile uint16_t subStepCnt[CHANNELS] = {0};
+
+volatile Uint16 timer1_cnt = 0;
 int old_intm;
 uint16_t moduloValue = 13;
 Uint16 tim_val;
@@ -306,6 +310,8 @@ uint16_t fToPRD(float f);
 uint16_t tToPRD(float t);
 void EnableAPLL( );
 void wait( unsigned int cycles );
+uint16_t fToSubStepsPerTick(uint32_t f);
+void setTone(uint32_t tone, uint16_t channelIndex);
 
 // *****************************************************************************
 /**
@@ -375,7 +381,8 @@ int main( void )
     IRQ_globalEnable();
 
     /* Start Timer */
-    PREG16(((TIMER_PrivateObj*)mhTimer0)->PrdAddr) = fToPRD(110.0 * SIZE_OF_BUFFER);
+    //PREG16(((TIMER_PrivateObj*)mhTimer0)->PrdAddr) = fToPRD(110.0 * SIZE_OF_BUFFER);
+    setTone(440,1);
     TIMER_start(mhTimer0);
     TIMER_start(mhTimer1);
 
@@ -572,6 +579,13 @@ void fn_delay( Uint16 rounds )
 }
 
 //f in Hz
+// substeps are 1/64 full step (means fixed point arithmic with 10bits int and 6 bits fraction
+uint16_t fToSubStepsPerTick(uint32_t f)
+{
+   return (uint32_t)65536 * f / ((uint32_t)48000);
+}
+
+//f in Hz
 uint16_t fToPRD(float f)
 {
    return tToPRD(1/f);
@@ -585,9 +599,13 @@ uint16_t tToPRD(float t)
     return ticks / 16;
 }
 
-void setTone(float tone)
+void setTone(uint32_t tone, uint16_t channelIndex)
 {
-    PREG16(((TIMER_PrivateObj*)mhTimer0)->PrdAddr) = fToPRD(tone * (float)SIZE_OF_BUFFER);
+    if(channelIndex < CHANNELS)
+    {
+        subStepsPerTick[channelIndex] = fToSubStepsPerTick(tone);
+    }
+    //PREG16(((TIMER_PrivateObj*)mhTimer0)->PrdAddr) = fToPRD(tone * (float)SIZE_OF_BUFFER);
 }
 
 void wait( unsigned int cycles )
@@ -651,6 +669,12 @@ interrupt void timer1Isr(void)
         ms++;
         timPrecounter = 0;
     }
+    //generate output
+    subStepCnt[0] += subStepsPerTick[0];
+    subStepCnt[1] += subStepsPerTick[1];
+    uint16_t outputValue = (sin_LT[subStepCnt[0] >> 6] >> 1) + (sin_LT[subStepCnt[1] >> 6] >> 1);
 
-    MCBSP_write32( h_McBSP, output );
+    MCBSP_write32( h_McBSP, (unsigned) outputValue );
+
+    timer1_cnt = PREG16(((TIMER_PrivateObj*)mhTimer1)->Timer);
 }
