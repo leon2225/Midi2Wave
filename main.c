@@ -288,6 +288,11 @@ volatile uint32_t ms = 0;
 #define CHANNELS 2
 volatile uint16_t subStepsPerTick[CHANNELS] = {0};
 volatile uint16_t subStepCnt[CHANNELS] = {0};
+//--------------------------
+Uint16 leftVolumeMute[2] = {0x05,0x184};
+Uint16 leftVolumeUnmute[2] = {0x05,0x1F0};
+Uint16 rightVolumeMute[2] = {0x07,0x180}; //180
+Uint16 rightVolumeUnmute[2] = {0x07,0x1F0};
 
 volatile Uint16 timer1_cnt = 0;
 int old_intm;
@@ -304,7 +309,7 @@ interrupt void timer1Isr(void);
 
 void fn_AIC23_config( void );
 void fn_AIC23_reset( void );
-int fn_AIC23_send( Uint16* data );
+int fn_AIC23_send( Uint16* data);
 void fn_delay( Uint16 rounds );
 uint16_t fToPRD(float f);
 uint16_t tToPRD(float t);
@@ -465,65 +470,42 @@ void fn_AIC23_config( void ) {
      * |                           |   |   |                           |Register-Data..........................|   |
      * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
      */
-    Uint16 *ptr;
-    int i;
 
-    /* Register Adressen und Daten f�r die I2C �bertragung                    */
-    Uint16 cfg_AIC23[] = {
-        0x001Fu,                /*< Left line input channel volume control (Address: 0000000) */
-        0x021Fu,                /*< Right Line Input Channel Volume Control (Address: 0000001) */
-        0x047Fu,                /*< Left Channel Headphone Volume Control (Address: 0000010) */
-        0x067Fu,                /*< Right Channel Headphone Volume Control (Address: 0000011) */
-        0x0812u,                /*< Analog Audio Path Control (Address: 0000100) */
-        0x0A01u,                /*< Digital Audio Path Control (Address: 0000101) */
-        0x0C02u,                /*< Power Down Control (Address: 0000110) */
-        0x0E43u,                /*< Digital Audio Interface Format (Address: 0000111) */
-        0x1001u,                /*< Sample Rate Control (Address: 0001000) */
-        0x1201u                 /*< Digital Interface Activation (Address: 0001001) */
-    };
+    Uint16 reset[2] = {0x1E,0x00};
+    Uint16 power_down_control[2] = {0x0C,0x07};               //line, mic and adc -> off; dac, out, osc, clk, off -> on
+    Uint16 analog_audio_path_control[2] = {0x08,0x10};        //mic muted, dac selected
+    Uint16 digital_audio_path_control[2] = {0x0A,0x07};       //ADC high pass filter enabled
+    Uint16 digital_audio_interface_format[2] = {0x0E,0x43};   //DSP Format, 16 Bit input length, dac right channel on (LRCIN high), no swap leftRight, master mode
+    Uint16 sample_rate_control[2] = {0x10,0x0};               //sample rate adc, dac auf 48kHz
+    Uint16 digital_interface_activation[2] = {0x12,0x01};     //USB activated
+    Uint16 left_line_input_volume_control[2] = {0x01,0x97};   //muted, 0dB, left/right, sync disabled
+    Uint16 right_line_input_volume_control[2] = {0x03,0x97};  //muted, 0dB, left/right, sync disabled
+    Uint16 left_headphone_volume_control[2] = {0x05,0xF0};    //maximum Volume, zero crossing enabled, left/right sync disabled
+    Uint16 right_headphone_volume_control[2] = {0x07,0xF0};   //maximum Volume, zero crossing enabled, left/right sync disabled
 
-    /* �bertragung der Konfiguration an das "Control Interface" per I2C-Bus   */
-    for( i = 0; i < sizeof( cfg_AIC23 ); i++ )
-    {
-        ptr = cfg_AIC23 + i;
-        fn_AIC23_send( ptr );
-    }
-}
+    /* configure reset register */
+    fn_AIC23_send(reset);
+    /* configure power down control register */
+    fn_AIC23_send(power_down_control);
+    /* configure analog audio path register */
+    fn_AIC23_send(analog_audio_path_control);
+    /* configure digital audio path register */
+    fn_AIC23_send(digital_audio_path_control);
+    /* configure digital audio interface register */
+    fn_AIC23_send(digital_audio_interface_format);
+    /* configure sample rate control register */
+    fn_AIC23_send(sample_rate_control);
+    /* configure digital interface activation register */
+    fn_AIC23_send(digital_interface_activation);
+    /* configure left line input register */
+    fn_AIC23_send(left_line_input_volume_control);
+    /* configure right line input register */
+    fn_AIC23_send(right_line_input_volume_control);
+    /* configure left headphone register */
+    fn_AIC23_send(left_headphone_volume_control);
+    /* configure right headphone register */
+    fn_AIC23_send(right_headphone_volume_control);
 
-
-/**
- *  @fn             fn_AIC23_reset( void )
- *  @brief          Reset Register des AIC23 "Control Interface" auf 0 0000 0000 setzen
- *  @details        Via I2C Bus wird das "Reset Register" (Adresse: 0b0001111)
- *                  des TLV320AIC23B Audio Codecs gel�scht, um so einen Reset
- *                  auszul�sen.
- *
- *  @return         @b 0 - bei erfolgreicher �bertragung des Reset Befehls\n
- *                  @b 1 - falls nach N Versuchen kein �bertragungsversuch erfolgreich war
- */
-void fn_AIC23_reset( void )
-{
-    int n = 0;
-
-    /* Anzahl der Wiederholungen, bevor die �bertragung abgebrochen wird      */
-    int N = 5;
-
-    /* Register Adresse + Daten um das "Reset Register" zu beschreiben        */
-    Uint16 reset[] = { 0x1E00u };
-
-    /* Ausf�hren von N �bertragungsversuchen                                  */
-    while( n < N )
-    {
-        if( 0 == fn_AIC23_send( reset ) )
-        {
-            n = N;
-        }
-
-        n++;
-    }
-
-    /* Zeit f�r den AIC23 um den Reset durchzuf�hren                          */
-    fn_delay( 50000 );
 }
 
 /**
@@ -535,6 +517,7 @@ void fn_AIC23_reset( void )
  *  @note           7 Bit Register Adresse [15:9] + 9 Bit Register Daten [8:0]
  *
  *  @param[in]      data    16-Bit f�r die �bertragung via I2C (Adresse + Daten)
+ *                  count   number of 16-Bit Data to send
  *
  *  @return         @b 0 - erfolgreiche �bertragung\n
  *                  @b 1 - Bus belegt, Startsequenz kann nicht generiert werden\n
@@ -543,15 +526,35 @@ void fn_AIC23_reset( void )
  *                  @b 4 - Timeout (beim Warten auf XRDY)\n
  *                  @b 5 - NACK (not Acknowledge) empfangen (beim letztem Byte)\n
  */
-int fn_AIC23_send( Uint16* data )
+int fn_AIC23_send( Uint16* data)
 {
-    int S = I2C_write( data, 1, 1, 0x1Au, 1, 30000 );
 
-//    S == 0 ? printf( "AIC23 send (0x%04X) via I2C done!\n", *data ) : printf( "AIC23 send (0x%04X) via I2C failed!\n", *data );
-
-    fn_delay( 1 );
+    int S = I2C_write( data, 2, 1, 0x1Au, 1, 30000 ); //1x16Bit Data, Master mode, Slave Adress, Transfer mode (S-A-D...(n)..D-P)
 
     return S;
+}
+
+void fn_mute()
+{
+    int n = 0;
+
+    /* Anzahl der Wiederholungen, bevor die �bertragung abgebrochen wird      */
+    int N = 5;
+
+    /* Register Adresse + Daten um das "Reset Register" zu beschreiben        */
+    Uint16 adressLeft = 0x460u;
+    Uint16 adressRight = 0x660u;
+    fn_AIC23_send(&adressLeft);
+    fn_AIC23_send(&adressRight);
+}
+
+void fn_unmute()
+{
+    /* Register Adresse + Daten um das "Reset Register" zu beschreiben        */
+    Uint16 adressLeft = 0x47Fu;
+    Uint16 adressRight = 0x67Fu;
+    fn_AIC23_send(&adressLeft);
+    fn_AIC23_send(&adressRight);
 }
 
 /**
