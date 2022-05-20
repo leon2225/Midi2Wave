@@ -59,12 +59,13 @@ void aud_setTone(uint32_t tone, uint16_t channelIndex)
 
     if(tone > 0)
     {
+        ga_channel[channelIndex].gainIncrement = 2;
         ga_channel[channelIndex].subStepsPerTick = aud_fToSubStepsPerTick(tone);
-        aud_setGain(500, channelIndex);
+        ga_channel[channelIndex].maxGain = 500<<6;
     }
     else
     {
-        aud_setGain(0, channelIndex);
+        ga_channel[channelIndex].gainIncrement = -100;
     }
 
 
@@ -92,16 +93,18 @@ interrupt void aud_sampleISR(void)
     uint32_t outputValue = 0;
     uint16_t index = 0;
     for (index = 0; index < CHANNELS; ++index) {
-        if(ga_channel[index].gain)
+        if(ga_channel[index].gainIncrement > 0 || ga_channel[index].gain > ga_channel[index].gainIncrement )
         {
             ga_channel[index].subStepCnt += ga_channel[index].subStepsPerTick;
+            if (ga_channel[index].gain < (ga_channel[index].maxGain - ga_channel[index].gainIncrement))
+                ga_channel[index].gain += ga_channel[index].gainIncrement;
         }
         else
         {
             ga_channel[index].subStepCnt = 0;
         }
         //There should be no overflow, as max value is 2^16*1024 => 2^26
-        outputValue += ((int32_t) sin_LT[ga_channel[index].subStepCnt >> 6] * ga_channel[index].gain);
+        outputValue += ((int32_t) sin_LT[ga_channel[index].subStepCnt >> 6] * (ga_channel[index].gain >> 6));
     }
 
     //Here an overflow could occur -> sum of all gains must not exceed 1024

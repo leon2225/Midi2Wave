@@ -14,10 +14,11 @@
 
 typedef struct ChannelHandler
 {
-    volatile uint16_t subStepsPerTick;
-    volatile uint16_t subStepCnt;
-    volatile uint16_t gain;
-    volatile uint16_t gainDecrement;
+    volatile uint16_t subStepsPerTick;//10:6
+    volatile uint16_t subStepCnt;//10:6
+    volatile uint16_t gain;//10:6
+    volatile uint16_t maxGain;//10:6
+    volatile int16_t gainIncrement; //10:6
 }ChannelHandler;
 
 // defines
