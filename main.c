@@ -119,14 +119,11 @@ volatile int cnt_input = 0;
 
 
 // ... H A N D L E R ( h_ ) ....................................................
-/** Handler f�r McBSP0                                                        */
 MCBSP_Handle h_McBSP;
-/** Handler f�r Timer0                                                        */
 TIMER_Handle mhTimer0;
 TIMER_Handle mhTimer1;
 
 // ... E V E N T   I D ( eID_ ) ................................................
-/** Event ID des McBSP0-Rx-Interrupts                                         */
 Uint16 eID_McBSP_rx;
 
 
@@ -154,7 +151,6 @@ int main( void )
 {
     // entrance   ( c_int00 ) .-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
    // void (*x)(void) = c_int00;
-    // .-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 
     EnableAPLL( );
 
@@ -211,9 +207,9 @@ int main( void )
     TIMER_start(mhTimer0);
     TIMER_start(mhTimer1);
 
-    aud_setGain(500, 0);
-    aud_setGain(500, 1);
+    aud_init();
     USBTest_Init();
+
 
     while( 1 )
     {}

@@ -12,21 +12,23 @@
 
 //data types
 
-typedef struct
+typedef struct ChannelHandler
 {
     volatile uint16_t subStepsPerTick;
     volatile uint16_t subStepCnt;
     volatile uint16_t gain;
+    volatile uint16_t gainDecrement;
 }ChannelHandler;
 
 // defines
 
 #define     SIZE_OF_BUFFER      1024
-#define     CHANNELS            2
+#define     CHANNELS            16
 
 //functions declarations
 
 interrupt void aud_sampleISR(void);
+void aud_init();
 void aud_setTone(uint32_t tone, uint16_t channelIndex);
 void aud_setGain(uint16_t gain, uint16_t channelIndex);
 

@@ -26,7 +26,7 @@ extern TIMER_Handle mhTimer1;
 
 uint16_t g_timPrecounter = 0;
 volatile uint32_t g_ms = 0;
-ChannelHandler ga_channel [CHANNELS] = {0};
+ChannelHandler ga_channel [CHANNELS];
 
 
 //private prototypes
@@ -38,13 +38,38 @@ uint16_t aud_fToSubStepsPerTick(uint32_t f);
 
 //public functions
 
-void aud_setTone(uint32_t tone, uint16_t channelIndex)
+
+void aud_init()
 {
-    if(channelIndex < CHANNELS)
-    {
-        ga_channel[channelIndex].subStepsPerTick = aud_fToSubStepsPerTick(tone);
+
+    int index = 0;
+    ChannelHandler emptyCh = {0,0,0};
+    for (index = 0; index < CHANNELS; ++index) {
+        ga_channel[index] = emptyCh;
     }
 }
+
+void aud_setTone(uint32_t tone, uint16_t channelIndex)
+{
+
+    if(channelIndex >= CHANNELS)
+    {
+        return;
+    }
+
+    if(tone > 0)
+    {
+        ga_channel[channelIndex].subStepsPerTick = aud_fToSubStepsPerTick(tone);
+        aud_setGain(500, channelIndex);
+    }
+    else
+    {
+        aud_setGain(0, channelIndex);
+    }
+
+
+}
+
 void aud_setGain(uint16_t gain, uint16_t channelIndex)
 {
     if(channelIndex < CHANNELS)
@@ -62,6 +87,7 @@ interrupt void aud_sampleISR(void)
         g_ms++;
         g_timPrecounter = 0;
     }
+
     //generate output
     uint32_t outputValue = 0;
     uint16_t index = 0;
@@ -78,7 +104,7 @@ interrupt void aud_sampleISR(void)
         outputValue += ((int32_t) sin_LT[ga_channel[index].subStepCnt >> 6] * ga_channel[index].gain);
     }
 
-    //Here an overflow could accure -> sum of all gains must not exeed 1024
+    //Here an overflow could occur -> sum of all gains must not exceed 1024
     uint16_t output16 =  (unsigned) (outputValue >> 10);
 
     MCBSP_write32( h_McBSP, (uint16_t) output16 | (uint32_t) output16 << 16);
