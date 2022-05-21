@@ -30,7 +30,8 @@ typedef struct ChannelHandler
 
 interrupt void aud_sampleISR(void);
 void aud_init();
-void aud_setTone(uint32_t tone, uint16_t channelIndex);
+void aud_startTone(uint16_t tone,  uint16_t maxGain, uint16_t channelIndex);
+void aud_stopChannel(uint16_t channelIndex);
 void aud_setGain(uint16_t gain, uint16_t channelIndex);
 
 #endif /* AUDIO_CREATION_H_ */

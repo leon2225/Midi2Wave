@@ -365,9 +365,19 @@ void USB_bulkOutDatHandler(USB_EpHandle hEpIn, USB_EpHandle hEpOut)
     {
         //puts("Received Data");
         //Uint32 in = ((Uint32)*(Endpt2Buff+2) << 16) | (*(Endpt2Buff+1));
-        int index = 0;
-        for (index = 0; index < CHANNELS; ++index) {
-            aud_setTone(*(Endpt2Buff+1+index),index);
+        uint16_t cmd = *(Endpt2Buff+1);
+        switch (cmd) {
+            case 1:
+                aud_startTone(*(Endpt2Buff+3), *(Endpt2Buff+4), *(Endpt2Buff+2));
+            break;
+            case 2:
+                aud_stopChannel(*(Endpt2Buff+2));
+            break;
+            case 3:
+                aud_reset();
+            break;
+            default:
+                break;
         }
         /*char inArray[4];
         int i = 0;
