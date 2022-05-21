@@ -11,7 +11,7 @@
 #define AIC23_H_
 
 void aic23_reset( void );
-void aic23_config( void );
+void aic23_config( uint16_t volume );
 int aic23_send( uint16_t* data);
 
 #endif /* AIC23_H_ */

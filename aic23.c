@@ -27,7 +27,7 @@ void aic23_delay( uint16_t rounds );
  *                  zu erreichen\n
  *                  CS = @b 0 - Die Adresse ist auf 0b0011010 festgelegt\n
  */
-void aic23_config( void ) {
+void aic23_config( uint16_t volume ) {
     /*
      * Aufbau des I2C Datenrahmen
      *
@@ -49,8 +49,11 @@ void aic23_config( void ) {
     uint16_t digital_interface_activation[2] = {0x12,0x01};     //USB activated
     uint16_t left_line_input_volume_control[2] = {0x01,0x97};   //muted, 0dB, left/right, sync disabled
     uint16_t right_line_input_volume_control[2] = {0x03,0x97};  //muted, 0dB, left/right, sync disabled
-    uint16_t left_headphone_volume_control[2] = {0x05,0xF0};    //maximum Volume, zero crossing enabled, left/right sync disabled
-    uint16_t right_headphone_volume_control[2] = {0x07,0xF0};   //maximum Volume, zero crossing enabled, left/right sync disabled
+    uint16_t left_headphone_volume_control[2] = {0x05,0xB0 + 30};    //maximum Volume, zero crossing enabled, left/right sync disabled
+    uint16_t right_headphone_volume_control[2] = {0x07,0xB0 + 30};   //maximum Volume, zero crossing enabled, left/right sync disabled 79 max volume
+
+    left_headphone_volume_control[1] = 0xB0 + volume;
+    right_headphone_volume_control[1] = 0xB0 + volume;
 
     /* configure reset register */
     aic23_send(reset);
