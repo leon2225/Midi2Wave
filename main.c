@@ -185,7 +185,7 @@ int main( void )
 
     /* Konfiguration des Audio Codec via I2C                                  */
     aic23_reset();
-    aic23_config(45);
+    aic23_config(120);
 
     /* Konfiguration der McBSP Verbindung                                     */
     h_McBSP = MCBSP_open( MCBSP_PORT0, MCBSP_OPEN_RESET );

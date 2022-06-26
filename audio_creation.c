@@ -98,9 +98,10 @@ interrupt void aud_sampleISR(void)
     uint32_t outputValue = 0;
     uint16_t index = 0;
     for (index = 0; index < CHANNELS; ++index) {
-        if(ga_channel[index].gainIncrement > 0 || ga_channel[index].gain > (-ga_channel[index].gainIncrement) )
+        if(ga_channel[index].gainIncrement > 0 || ga_channel[index].gain >= (-ga_channel[index].gainIncrement) )
         {
             ga_channel[index].subStepCnt += ga_channel[index].subStepsPerTick;
+
             if (ga_channel[index].gain < (ga_channel[index].maxGain - ga_channel[index].gainIncrement))
                 ga_channel[index].gain += ga_channel[index].gainIncrement;
         }

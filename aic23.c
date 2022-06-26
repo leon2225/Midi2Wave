@@ -49,11 +49,6 @@ void aic23_config( uint16_t volume ) {
     uint16_t digital_interface_activation[2] = {0x12,0x01};     //USB activated
     uint16_t left_line_input_volume_control[2] = {0x01,0x97};   //muted, 0dB, left/right, sync disabled
     uint16_t right_line_input_volume_control[2] = {0x03,0x97};  //muted, 0dB, left/right, sync disabled
-    uint16_t left_headphone_volume_control[2] = {0x05,0xB0 + 30};    //maximum Volume, zero crossing enabled, left/right sync disabled
-    uint16_t right_headphone_volume_control[2] = {0x07,0xB0 + 30};   //maximum Volume, zero crossing enabled, left/right sync disabled 79 max volume
-
-    left_headphone_volume_control[1] = 0xB0 + volume;
-    right_headphone_volume_control[1] = 0xB0 + volume;
 
     /* configure reset register */
     aic23_send(reset);
@@ -73,11 +68,27 @@ void aic23_config( uint16_t volume ) {
     aic23_send(left_line_input_volume_control);
     /* configure right line input register */
     aic23_send(right_line_input_volume_control);
+
+    aic23_setVolume(volume);
+}
+
+/**
+ * Sets Volume for both channels from range -73db - +6db with 7 bit wide value
+ */
+void aic23_setVolume(uint16_t volume)
+{
+    volume &= 0x7F;
+
+    uint16_t left_headphone_volume_control[2] = {0x05,0};    //maximum Volume, zero crossing enabled, left/right sync disabled
+    uint16_t right_headphone_volume_control[2] = {0x07,0};   //maximum Volume, zero crossing enabled, left/right sync disabled 79 max volume
+
+    left_headphone_volume_control[1] = 0x0180 + volume;
+    right_headphone_volume_control[1] = 0x0180 + volume;
+
     /* configure left headphone register */
     aic23_send(left_headphone_volume_control);
     /* configure right headphone register */
     aic23_send(right_headphone_volume_control);
-
 }
 
 /**

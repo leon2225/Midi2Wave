@@ -376,6 +376,9 @@ void USB_bulkOutDatHandler(USB_EpHandle hEpIn, USB_EpHandle hEpOut)
             case 3:
                 aud_reset();
             break;
+            case 4:
+                aic23_setVolume(*(Endpt2Buff+2));
+            break;
             default:
                 break;
         }
