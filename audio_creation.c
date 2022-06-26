@@ -71,8 +71,10 @@ void aud_reset()
 {
     int index = 0;
     for (index = 0; index < CHANNELS; ++index) {
+        aud_setGain(0, index);
         aud_stopChannel(index);
     }
+
 }
 
 
