@@ -31,14 +31,16 @@ ChannelHandler ga_channel [CHANNELS];
 
 //private prototypes
 
-uint16_t aud_fToPRD(float f);
-uint16_t aud_tToPRD(float t);
 uint16_t aud_fToSubStepsPerTick(uint32_t f);
 
 
 //public functions
 
 
+/**
+ * @brief Initializes the audio creation module
+ * 
+ */
 void aud_init()
 {
 
@@ -49,6 +51,13 @@ void aud_init()
     }
 }
 
+/**
+ * @brief Starts the tone /tone/ with a volume of /maxGain/ on the channel /channelIndex/
+ * 
+ * @param tone          Tone to be played
+ * @param maxGain       MaxGain (Volume) for this tone
+ * @param channelIndex  Channel to play this tone on
+ */
 void aud_startTone(uint16_t tone, uint16_t maxGain, uint16_t channelIndex)
 {
 
@@ -62,11 +71,21 @@ void aud_startTone(uint16_t tone, uint16_t maxGain, uint16_t channelIndex)
     ga_channel[channelIndex].maxGain = maxGain<<6;
 }
 
+/**
+ * @brief Stops/mutes the tone on the channel /channelIndex
+ * 
+ * @param channelIndex  Channel to stop tone on
+ */
 void aud_stopChannel(uint16_t channelIndex)
 {
     ga_channel[channelIndex].gainIncrement = -20;
 }
 
+
+/**
+ * @brief Resets the audio creation module
+ * 
+ */
 void aud_reset()
 {
     int index = 0;
@@ -78,6 +97,12 @@ void aud_reset()
 }
 
 
+/**
+ * @brief Sets the gain for the channel with the index /channelIndex/ to /gain/
+ * 
+ * @param gain          Gain to whoch the channel should be set to
+ * @param channelIndex  Index of the Channel
+ */
 void aud_setGain(uint16_t gain, uint16_t channelIndex)
 {
     if(channelIndex < CHANNELS)
@@ -86,7 +111,11 @@ void aud_setGain(uint16_t gain, uint16_t channelIndex)
     }
 }
 
-
+/**
+ * @brief ISR that is used for creation of the audio signals, should be called at a frequency of 48 kHz
+ * 
+ * @return interrupt 
+ */
 interrupt void aud_sampleISR(void)
 {
     g_timPrecounter++;
@@ -124,25 +153,13 @@ interrupt void aud_sampleISR(void)
 
 //private functions
 
-//f in Hz
-// substeps are 1/64 full step (means fixed point arithmic with 10bits int and 6 bits fraction
+/**
+ * @brief Transform the frequency /f/ to Steps to be taken in 64 fractions
+ * 
+ * @param f             frequency in Hertz
+ * @return uint16_t     Requeired substeps in fixed point arithmic with 10bits int and 6 bits fraction
+ */
 uint16_t aud_fToSubStepsPerTick(uint32_t f)
 {
    return (uint32_t)65536 * f / ((uint32_t)48000);
-}
-
-
-//f in Hz
-uint16_t aud_fToPRD(float f)
-{
-   return aud_tToPRD(1/f);
-}
-
-
-//t in s
-uint16_t aud_tToPRD(float t)
-{
-    float clk = 192065280;
-    uint32_t ticks = (float)(clk * t);
-    return ticks / 16;
 }

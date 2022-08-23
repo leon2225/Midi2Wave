@@ -363,8 +363,6 @@ void USB_bulkOutDatHandler(USB_EpHandle hEpIn, USB_EpHandle hEpOut)
 {
     if ( USB_isTransactionDone( hEpOut ) )
     {
-        //puts("Received Data");
-        //Uint32 in = ((Uint32)*(Endpt2Buff+2) << 16) | (*(Endpt2Buff+1));
         uint16_t cmd = *(Endpt2Buff+1);
         switch (cmd) {
             case 1:
@@ -382,12 +380,6 @@ void USB_bulkOutDatHandler(USB_EpHandle hEpIn, USB_EpHandle hEpOut)
             default:
                 break;
         }
-        /*char inArray[4];
-        int i = 0;
-        for(i = 0; i<4; i++)
-        {
-            inArray[i] = (((char*) (Endpt2Buff + 1))[i] &0xFF) - '0' ;
-        }*/
 
 
 
