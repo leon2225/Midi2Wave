@@ -10,8 +10,7 @@
 #ifndef AIC23_H_
 #define AIC23_H_
 
-void aic23_reset( void );
-void aic23_config( uint16_t volume );
+void aic23_config( void );
 int aic23_send( uint16_t* data);
 void aic23_setVolume( uint16_t volume );
 

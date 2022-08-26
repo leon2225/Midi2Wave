@@ -86,15 +86,13 @@ MCBSP_Config cfg_McBSP = {
 /* Create a TIMER configuration structure that can be passed */
 /* to TIMER_config CSL function for initialization of Timer  */
 /* control registers.                                        */
-//Config for ??? Hz
+
 TIMER_Config timCfg0 = {
    TIMER_CTRL,               /* TCR0 */
    13640,                  /* PRD0 */
    0x000F                    /* PRSC */
 };
 
-
-//Config for 48000 Hz
 TIMER_Config timCfg1 = {
    TIMER_CTRL,               /* TCR0 */
    4000,                  /* PRD0 */
@@ -113,11 +111,6 @@ I2C_Setup cfg_I2C = {
 
 // --- G L O B A L   V A R I A B L E S ---------------------------------------
 
-int volatile * const LEDs = (int *) 0x3F0000;
-volatile int cnt_input = 0;
-
-
-
 // ... H A N D L E R ( h_ ) ....................................................
 MCBSP_Handle h_McBSP;
 TIMER_Handle mhTimer0;
@@ -125,8 +118,6 @@ TIMER_Handle mhTimer1;
 
 // ... E V E N T   I D ( eID_ ) ................................................
 Uint16 eID_McBSP_rx;
-
-
 Uint16 eventId0;
 Uint16 eventId1;
 
@@ -138,22 +129,11 @@ void wait( unsigned int cycles );
 
 
 // *****************************************************************************
-/**
- *  @fn             main( void )
- *  @brief          Hauptfunktion
- *  @details        Konfiguration der Peripherie und Initialisierung der
- *                  unterschiedlichen Programmteile vor dem ersten "Start" des
- *                  (eigentlichen) Programmablauf
- *
- *  @return         @b 0 - bei erfolgreicher Beendigung
- */
+
 int main( void )
 {
-    // entrance   ( c_int00 ) .-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-   // void (*x)(void) = c_int00;
 
     EnableAPLL( );
-
     CSL_init();
 
     /* Set IVPH/IVPD to start of interrupt vector table */
@@ -180,14 +160,13 @@ int main( void )
     IRQ_plug(eventId0,&timer0Isr);
     IRQ_plug(eventId1,&aud_sampleISR);
 
-    /* Konfiguration des I2C Bus                                              */
+    /* Configuration of I2C peripheral interface */
     I2C_setup( &cfg_I2C );
 
-    /* Konfiguration des Audio Codec via I2C                                  */
-    aic23_reset();
-    aic23_config(120);
+    /* Configuration of AIC23B audio interface */
+    aic23_config();
 
-    /* Konfiguration der McBSP Verbindung                                     */
+    /* Configuration of McBSP */
     h_McBSP = MCBSP_open( MCBSP_PORT0, MCBSP_OPEN_RESET );
     eID_McBSP_rx = MCBSP_getRcvEventId( h_McBSP );
     MCBSP_config( h_McBSP, &cfg_McBSP );
@@ -207,7 +186,10 @@ int main( void )
     TIMER_start(mhTimer0);
     TIMER_start(mhTimer1);
 
+    /* Initialisation of the audio creation module  */
     aud_init();
+
+    /* Initialisation of the USB module */
     USBTest_Init();
 
 
@@ -223,13 +205,21 @@ int main( void )
 // --- F U N K T I O N E N -----------------------------------------------------
 
 
-
+/**
+ * @brief Blocking the execution of the programm on DSP for /cycles/ 
+ * 
+ * @param cycles   number of clock cycles to wait 
+ */
 void wait( unsigned int cycles )
 {
     int i;
     for ( i = 0 ; i < cycles ; i++ ){ }
 }
 
+/**
+ * @brief Cofiguration of the APLL
+ * 
+ */
 void EnableAPLL( )
 {
     /* Enusre DPLL is running */
