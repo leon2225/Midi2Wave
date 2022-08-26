@@ -87,12 +87,6 @@ MCBSP_Config cfg_McBSP = {
 /* to TIMER_config CSL function for initialization of Timer  */
 /* control registers.                                        */
 
-TIMER_Config timCfg0 = {
-   TIMER_CTRL,               /* TCR0 */
-   13640,                  /* PRD0 */
-   0x000F                    /* PRSC */
-};
-
 TIMER_Config timCfg1 = {
    TIMER_CTRL,               /* TCR0 */
    4000,                  /* PRD0 */
@@ -113,17 +107,14 @@ I2C_Setup cfg_I2C = {
 
 // ... H A N D L E R ( h_ ) ....................................................
 MCBSP_Handle h_McBSP;
-TIMER_Handle mhTimer0;
 TIMER_Handle mhTimer1;
 
 // ... E V E N T   I D ( eID_ ) ................................................
 Uint16 eID_McBSP_rx;
-Uint16 eventId0;
 Uint16 eventId1;
 
 
 // --- private function prototypes ---------------------------------
-interrupt void timer0Isr(void);
 void EnableAPLL( );
 void wait( unsigned int cycles );
 
@@ -142,22 +133,18 @@ int main( void )
     /* Temporarily disable all maskable interrupts */
     IRQ_globalDisable();
 
-    /* Open Timer 0, set registers to power on defaults */
-    mhTimer0 = TIMER_open(TIMER_DEV0, TIMER_OPEN_RESET);
+    /* Open Timer 1, set registers to power on defaults */
     mhTimer1 = TIMER_open(TIMER_DEV1, TIMER_OPEN_RESET);
 
     /* Get Event Id associated with Timer 0, for use with */
     /* CSL interrupt enable functions.                    */
-    eventId0 = TIMER_getEventId(mhTimer0);
     eventId1 = TIMER_getEventId(mhTimer1);
 
     /* Clear any pending Timer interrupts */
-    IRQ_clear(eventId0);
     IRQ_clear(eventId1);
 
     /* Place interrupt service routine address at */
     /* associated vector location */
-    IRQ_plug(eventId0,&timer0Isr);
     IRQ_plug(eventId1,&aud_sampleISR);
 
     /* Configuration of I2C peripheral interface */
@@ -172,18 +159,15 @@ int main( void )
     MCBSP_config( h_McBSP, &cfg_McBSP );
 
     /* Write configuration structure values to Timer control regs */
-    TIMER_config(mhTimer0, &timCfg0);
     TIMER_config(mhTimer1, &timCfg1);
 
     /* Enable Timer interrupt */
-    IRQ_enable(eventId0);
     IRQ_enable(eventId1);
 
     /* Enable all maskable interrupts */
     IRQ_globalEnable();
 
     /* Start Timer */
-    TIMER_start(mhTimer0);
     TIMER_start(mhTimer1);
 
     /* Initialisation of the audio creation module  */
@@ -197,7 +181,6 @@ int main( void )
     {}
 
     // unreachable
-    TIMER_close( mhTimer0 );
     MCBSP_close( h_McBSP );
     return 0;
 }
@@ -249,11 +232,6 @@ void EnableAPLL( )
 
     // DELAY
     wait( 60000 );
-}
-
-interrupt void timer0Isr(void)
-{
-
 }
 
 
